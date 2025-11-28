@@ -1,0 +1,31 @@
+[build-system]
+requires = [
+    "setuptools", 
+    "setuptools-nodejs @ file:///E:/workspace/algorithms/radar/tools/setuptools-nodejs"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vue-helloword"
+version = "0.1.0"
+description = "Test project for setuptools-nodejs integration"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Test User"},
+]
+requires-python = ">=3.7"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+]
+
+[tool.setuptools-nodejs]
+ext-modules = [
+    {target = "vue-helloword", source_dir = "browser", artifacts_dir = "dist"}
+]
+
+[tool.setuptools.packages.find]
+where = ["python"]

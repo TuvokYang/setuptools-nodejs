@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=45.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "setuptools-nodejs"
+version = "0.1.0"
+description = "Setuptools Node.js extension plugin"
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["distutils", "setuptools", "nodejs", "npm"]
+authors = [
+    {name = "Developer", email = "dev@example.com"},
+]
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Development Status :: 4 - Beta",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "setuptools>=45.0",
+]
+
+[project.entry-points."distutils.commands"]
+clean_nodejs = "setuptools_nodejs:clean_nodejs"
+build_nodejs = "setuptools_nodejs:build_nodejs"
+
+[project.entry-points."distutils.setup_keywords"]
+nodejs_extensions = "setuptools_nodejs.setuptools_ext:nodejs_extensions"
+
+[project.entry-points."setuptools.finalize_distribution_options"]
+setuptools_nodejs = "setuptools_nodejs.setuptools_ext:pyprojecttoml_config"
+
+[project.entry-points."setuptools.file_finders"]
+nodejs = "setuptools_nodejs.setuptools_ext:find_nodejs_source_files"
+
+[project.urls]
+Homepage = "https://gitlab.ee-yyk.com/tools/setuptools-nodejs"
+Repository = "https://gitlab.ee-yyk.com/tools/setuptools-nodejs"
+issues = "https://gitlab.ee-yyk.com/tools/setuptools-nodejs/issues"
+
+[tool.setuptools.package-data]
+setuptools_nodejs = ["py.typed"]
