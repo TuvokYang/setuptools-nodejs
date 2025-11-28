@@ -40,7 +40,7 @@ name = "my-fullstack-app"
 version = "0.1.0"
 
 [tool.setuptools-nodejs]
-ext-modules = [
+frontend-projects = [
     {target = "my-frontend", source_dir = "frontend", artifacts_dir = "dist"}
 ]
 ```
@@ -62,7 +62,7 @@ python -m build
 
 ```toml
 [tool.setuptools-nodejs]
-ext-modules = [
+frontend-projects = [
     {target = "my-frontend", source_dir = "frontend", artifacts_dir = "dist"}
 ]
 ```
@@ -71,7 +71,7 @@ ext-modules = [
 
 ```toml
 [tool.setuptools-nodejs]
-ext-modules = [
+frontend-projects = [
     {target = "admin-panel", source_dir = "admin", artifacts_dir = "dist"},
     {target = "client-app", source_dir = "client", artifacts_dir = "build"}
 ]
@@ -81,7 +81,7 @@ ext-modules = [
 
 ```toml
 [tool.setuptools-nodejs]
-ext-modules = [
+frontend-projects = [
     {
         target = "my-app",
         source_dir = "frontend",

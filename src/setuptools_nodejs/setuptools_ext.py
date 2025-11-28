@@ -34,7 +34,6 @@ else:
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 T = TypeVar("T", bound=NodeJSExtension)
 
@@ -47,7 +46,6 @@ def add_nodejs_extension(dist: Distribution) -> None:
         def add_defaults(self) -> None:
             # First call the parent method to get default files
             super().add_defaults()
-            
             # Then add Node.js source directories, excluding specified directories
             if hasattr(self.distribution, 'nodejs_extensions') and self.distribution.nodejs_extensions:
                 logger.debug("sdist_nodejs_extension.add_defaults() called")
@@ -225,10 +223,10 @@ def pyprojecttoml_config(dist: Distribution) -> None:
 
     # Always set nodejs_extensions attribute, even if empty
     if cfg:
-        # Handle ext-modules array format
-        ext_modules = cfg.get("ext-modules", [])
-        logger.debug(f"ext_modules: {ext_modules}")
-        extensions = map(partial(_create, NodeJSExtension), ext_modules)
+        # Handle frontend-projects array format
+        frontend_projects = cfg.get("frontend-projects", [])
+        logger.debug(f"frontend_projects: {frontend_projects}")
+        extensions = map(partial(_create, NodeJSExtension), frontend_projects)
         dist.nodejs_extensions = [*extensions]  # type: ignore[attr-defined]
         logger.debug(f"created nodejs_extensions: {dist.nodejs_extensions}")
         nodejs_extensions(dist, "nodejs_extensions", dist.nodejs_extensions)  # type: ignore[attr-defined]
@@ -252,7 +250,7 @@ def pyprojecttoml_config(dist: Distribution) -> None:
         # This ensures Node.js source files are included in sdist but not in wheel
         # if not hasattr(dist, 'find_files'):
         #     dist.find_files = {}
-        # dist.find_files['find_nodejs_source_files'] = find_nodejs_source_files
+        # dist.find_files['nodejs'] = find_nodejs_source_files
         # logger.debug("Registered find_nodejs_source_files as file finder")
         
     else:
@@ -282,30 +280,27 @@ def _get_bdist_wheel_cmd(
     except Exception:
         return None
 
-def _should_exclude_file(file_path: Path, source_dir: str, artifacts_dir: str) -> bool:
+def _should_exclude_file(file_path: Path, source_dir: str, exclude_dir: str) -> bool:
     """
     Check if a file should be excluded from sdist.
     
     Args:
         file_path: Absolute path to the file
         source_dir: Source directory path
-        artifacts_dir: Artifacts directory path (relative to source_dir or absolute)
+        exclude_dir: Exclude directory path (relative to source_dir or absolute)
         
     Returns:
         True if the file should be excluded, False otherwise
     """
-    logger.debug(f"file_path: {file_path}, source_dir: {source_dir}, artifacts_dir: {artifacts_dir}")
+    logger.debug(f"file_path: {file_path}, source_dir: {source_dir}, exclude_dir: {exclude_dir}")
     # 1. First check for node_modules
     try:
-        if "node_modules" in file_path.parts:
-            return True
-        
         if not file_path.is_absolute():
             _file_path = file_path.absolute()
         else:
             _file_path = file_path
         # 2. Handle artifacts_dir
-        artifacts_path = Path(artifacts_dir)
+        artifacts_path = Path(exclude_dir)
         
         # If artifacts_dir is relative, convert to absolute path by joining with source_dir
         if not artifacts_path.is_absolute():
@@ -317,6 +312,7 @@ def _should_exclude_file(file_path: Path, source_dir: str, artifacts_dir: str) -
             return True  # File is under artifacts_dir, exclude it
         except Exception as e:
             # File is not under artifacts_dir
+            logger.debug(e)
             pass
     except Exception as e:
         logger.error(e)
@@ -334,24 +330,26 @@ def find_nodejs_source_files(dirname: str) -> list[str]:
     Returns:
         List of file paths relative to project root
     """
-    
     try:
         with open("pyproject.toml", "rb") as f:
             config = toml_load(f)
         
         nodejs_config = config.get("tool", {}).get("setuptools-nodejs", {})
-        ext_modules = nodejs_config.get("ext-modules", [])
+        frontend_projects = nodejs_config.get("frontend-projects", [])
         files = []
-        for module in ext_modules:
+        for module in frontend_projects:
             source_dir = module.get("source_dir")
             artifacts_dir = module.get("artifacts_dir", "dist")
-            
+            exclude_dirs = ['node_modules', artifacts_dir]
             if source_dir:
                 source_path = Path(source_dir)
+                logger.debug(f"source_dir: {source_dir}")
                 if source_path.exists():
                     for file_path in source_path.rglob('*'):
                         if file_path.is_file():
-                            should_exclude = _should_exclude_file(file_path, source_dir, artifacts_dir)
+                            should_exclude = False
+                            for exclude_dir in exclude_dirs:
+                                should_exclude |= _should_exclude_file(file_path, source_dir, exclude_dir)
                             if not should_exclude:
                                 logger.debug(f"including file: {file_path}")
                                 files.append(str(file_path))

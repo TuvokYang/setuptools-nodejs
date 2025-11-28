@@ -23,7 +23,7 @@ dev = [
 ]
 
 [tool.setuptools-nodejs]
-ext-modules = [
+frontend-projects = [
     {target = "vue-helloword", source_dir = "browser", artifacts_dir = "dist"}
 ]
 
