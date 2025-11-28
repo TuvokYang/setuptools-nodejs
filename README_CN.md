@@ -202,7 +202,7 @@ python -m setuptools_nodejs build --verbose
 
 ```bash
 # 克隆仓库
-git clone https://github.com/example/setuptools-nodejs
+git clone https://gitlab.ee-yyk.com/tools/setuptools-nodejs
 cd setuptools-nodejs
 
 # 以开发模式安装
@@ -243,9 +243,9 @@ pytest tests/test_config.py
 
 如果您遇到任何问题或有疑问，请：
 
-1. 查看[文档](https://github.com/example/setuptools-nodejs#readme)
-2. 搜索[现有问题](https://github.com/example/setuptools-nodejs/issues)
-3. 创建[新问题](https://github.com/example/setuptools-nodejs/issues/new)
+1. 查看[文档](https://gitlab.ee-yyk.com/tools/setuptools-nodejs#readme)
+2. 搜索[现有问题](https://gitlab.ee-yyk.com/tools/setuptools-nodejs/issues)
+3. 创建[新问题](https://gitlab.ee-yyk.com/tools/setuptools-nodejs/issues/new)
 
 ## 致谢
 

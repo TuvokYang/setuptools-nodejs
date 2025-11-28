@@ -202,7 +202,7 @@ python -m setuptools_nodejs build --verbose
 
 ```bash
 # Clone the repository
-git clone https://github.com/example/setuptools-nodejs
+git clone https://gitlab.ee-yyk.com/tools/setuptools-nodejs
 cd setuptools-nodejs
 
 # Install in development mode
@@ -243,9 +243,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 If you encounter any problems or have questions, please:
 
-1. Check the [documentation](https://github.com/example/setuptools-nodejs#readme)
-2. Search [existing issues](https://github.com/example/setuptools-nodejs/issues)
-3. Create a [new issue](https://github.com/example/setuptools-nodejs/issues/new)
+1. Check the [documentation](https://gitlab.ee-yyk.com/tools/setuptools-nodejs#readme)
+2. Search [existing issues](https://gitlab.ee-yyk.com/tools/setuptools-nodejs/issues)
+3. Create a [new issue](https://gitlab.ee-yyk.com/tools/setuptools-nodejs/issues/new)
 
 ## Acknowledgments
 
