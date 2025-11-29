@@ -2,18 +2,16 @@ from __future__ import annotations
 
 import os
 import json
-import warnings
+from pathlib import Path
 from setuptools.errors import SetupError
 from setuptools.extension import Extension
 from typing import (
-    Any,
     Dict,
     List,
     Optional,
     Sequence,
     TYPE_CHECKING,
     Union,
-    cast,
 )
 
 if TYPE_CHECKING:
@@ -29,6 +27,7 @@ class NodeJSExtension(Extension):
         target: The name of the extension.
         source_dir: Path to the frontend source directory containing package.json.
         artifacts_dir: Directory where build artifacts are output (relative to source_dir).
+        output_dir: Directory where artifacts will be copied in the Python package (relative to project root).
         exclude_dirs: List of directories to exclude from source_dir in sdist packages.
             Defaults to ["node_modules"].
         args: A list of extra arguments to be passed to npm. For example,
@@ -49,6 +48,7 @@ class NodeJSExtension(Extension):
         target: Union[str, Dict[str, str]],
         source_dir: str = ".",
         artifacts_dir: Optional[str] = None,
+        output_dir: Optional[str] = None,
         exclude_dirs: Optional[List[str]] = None,
         args: Optional[Sequence[str]] = (),
         node_version: Optional[str] = None,
@@ -70,7 +70,7 @@ class NodeJSExtension(Extension):
         self.target = target
         self.source_dir = source_dir  # keep as provided, will be resolved at build time
         self.artifacts_dir = artifacts_dir or self._detect_artifacts_dir()
-        self.package_artifacts_dir = "frontend"  # fixed internal directory for Python package
+        self.package_artifacts_dir = output_dir or "frontend"  # use output_dir if provided, otherwise default to "frontend"
         
         # Initialize exclude_dirs with defaults and add artifacts_dir and package_artifacts_dir
         self.exclude_dirs = exclude_dirs or ["node_modules"]  # default to exclude node_modules
@@ -101,6 +101,50 @@ class NodeJSExtension(Extension):
             raise SetupError(
                 "Can not parse Node.js version: %s", self.node_version
             )
+
+    def should_exclude_file(self, file_path: Path) -> bool:
+        """
+        Check if a file should be excluded from source files.
+        
+        Args:
+            file_path: Path to the file to check
+            
+        Returns:
+            True if the file should be excluded, False otherwise
+        """
+        # Always exclude node_modules
+        if "node_modules" in file_path.parts:
+            return True
+        
+        # Check exclude_dirs
+        source_path = Path(self.source_dir)
+        for exclude_dir in self.exclude_dirs:
+            exclude_path = source_path / exclude_dir
+            try:
+                file_path.relative_to(exclude_path)
+                return True  # File is under exclude_dir
+            except ValueError:
+                # File is not under exclude_dir
+                continue
+        
+        return False
+
+    def get_source_files(self) -> List[str]:
+        """
+        Get all source files from the source directory, excluding specified directories.
+        
+        Returns:
+            List of file paths relative to project root
+        """
+        source_path = Path(self.source_dir)
+        files = []
+        
+        if source_path.exists():
+            for file_path in source_path.rglob('*'):
+                if file_path.is_file() and not self.should_exclude_file(file_path):
+                    files.append(str(file_path))
+        
+        return files
 
     def get_npm_version(self) -> Optional[SimpleSpec]:  # type: ignore[no-any-unimported]
         if self.npm_version is None:

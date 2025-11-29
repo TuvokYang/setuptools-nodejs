@@ -11,9 +11,9 @@ keywords = ["distutils", "setuptools", "nodejs", "npm"]
 authors = [
     {name = "TuvokYang", email = "yangyk16@whu.edu.cn"},
 ]
+license = "MIT"
 classifiers = [
     "Topic :: Software Development :: Build Tools",
-    "License :: OSI Approved :: MIT License",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",

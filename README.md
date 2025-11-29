@@ -1,6 +1,8 @@
 # setuptools-nodejs
 
-A setuptools extension for building Node.js frontend projects and packaging them with Python code.
+A setuptools extension for building Node.js frontend projects and packaging them with Python code, specifically designed for full-stack applications with Python backend frameworks like Flask and FastAPI.
+
+> **Design Inspiration**: This project draws inspiration from [setuptools-rust](https://github.com/PyO3/setuptools-rust) and [setuptools-scm](https://github.com/pypa/setuptools-scm), adopting similar extension patterns and configuration approaches for seamless integration with the Python packaging ecosystem.
 
 [中文文档](README_CN.md) | [English Documentation](README.md)
 
@@ -8,20 +10,31 @@ A setuptools extension for building Node.js frontend projects and packaging them
 
 `setuptools-nodejs` extends setuptools to automatically build Node.js frontend projects and include the built artifacts in your Python packages. It's perfect for full-stack Python applications that include frontend components built with frameworks like React, Vue, Angular, etc.
 
-## Features
+## Project Implementation Entry Points
 
-- 🔧 **Automatic Frontend Building**: Builds frontend projects during Python package builds
-- 📦 **Seamless Integration**: Works with standard Python packaging tools (`build`, `pip`, `twine`)
-- ⚙️ **Simple Configuration**: Configure everything in `pyproject.toml`
-- 🛠️ **Flexible Commands**: Standalone CLI for development builds
-- 📝 **Structured Logging**: Comprehensive logging using Python's standard logging module
-- 🔄 **Incremental Support**: Optional clean builds and dependency skipping
-- 🗂️ **Smart File Filtering**: Automatically excludes `node_modules` from source distributions
+### Main Entry Files
+- `setuptools_nodejs.setuptools_ext.pyprojecttoml_config` - Configuration parsing entry point
+- `setuptools_nodejs.build.build_nodejs` - Build command implementation
+- `setuptools_nodejs.extension.NodeJSExtension` - Frontend project configuration class
 
-## Installation
-
-```bash
-pip install setuptools-nodejs
+### Project Structure
+```
+setuptools-nodejs/
+├── src/setuptools_nodejs/
+│   ├── setuptools_ext.py    # setuptools integration and configuration parsing
+│   ├── extension.py         # NodeJSExtension class definition
+│   ├── build.py            # Build command implementation
+│   ├── command.py          # Command base class
+│   ├── clean.py            # Clean command
+│   └── _utils.py           # Utility functions
+├── examples/vue-helloworld/ # Working example project
+│   ├── browser/            # Vue frontend project
+│   │   ├── package.json    # Frontend dependency configuration
+│   │   ├── vite.config.ts  # Vite build configuration
+│   │   └── src/            # Frontend source code
+│   ├── python/             # Python package
+│   └── pyproject.toml      # Project configuration
+└── tests/                  # Test files
 ```
 
 ## Quick Start
@@ -56,24 +69,36 @@ This will automatically:
 2. Copy the build artifacts to the package directory
 3. Package everything into a Python wheel or sdist
 
-## Configuration
+## Configuration Examples
 
-### Basic Configuration
+### Basic Configuration (Based on vue-helloworld example)
 
 ```toml
+[build-system]
+requires = ["setuptools", "setuptools-nodejs"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vue-helloword"
+version = "0.1.0"
+description = "Test project for setuptools-nodejs integration"
+
 [tool.setuptools-nodejs]
 frontend-projects = [
-    {target = "my-frontend", source_dir = "frontend", artifacts_dir = "dist"}
+    {target = "vue-helloword", source_dir = "browser", artifacts_dir = "dist"}
 ]
+
+[tool.setuptools.packages.find]
+where = ["python"]
 ```
 
-### Multiple Frontend Projects
+### Multiple Frontend Projects with Output Directories
 
 ```toml
 [tool.setuptools-nodejs]
 frontend-projects = [
-    {target = "admin-panel", source_dir = "admin", artifacts_dir = "dist"},
-    {target = "client-app", source_dir = "client", artifacts_dir = "build"}
+    {target = "admin-panel", source_dir = "admin", artifacts_dir = "dist", output_dir = "my_package/admin"},
+    {target = "client-app", source_dir = "client", artifacts_dir = "build", output_dir = "my_package/client"}
 ]
 ```
 
@@ -93,11 +118,17 @@ frontend-projects = [
 ]
 ```
 
-## Usage
+## Currently Implemented Features
+
+### ✅ Implemented and Working
+- **Automatic Frontend Building**: Automatically runs `npm install` and `npm run build`
+- **Build Artifact Copying**: Automatically copies frontend build artifacts to Python package
+- **Multiple Project Support**: Supports configuring multiple frontend projects
+- **Configuration Parsing**: Correctly parses configuration from `pyproject.toml`
+- **Vue Project Support**: vue-helloworld example verified to work correctly
+- **Basic Error Handling**: Basic build error handling
 
 ### Command Line Interface
-
-#### Build Frontend
 
 ```bash
 # Build frontend using configuration from pyproject.toml
@@ -113,88 +144,39 @@ python -m setuptools_nodejs build --clean
 python -m setuptools_nodejs build --verbose
 ```
 
-#### Validate Configuration
+## Unimplemented Features and TODO List
 
-```bash
-python -m setuptools_nodejs validate
-```
+### ❌ Code Exists but Untested/Incomplete
 
-#### Clean Output
+1. **Framework Auto-detection Feature**
+   - `_detect_artifacts_dir` method exists but not thoroughly tested
+   - Vue detection: Only checks config file existence, doesn't parse actual configuration
+   - Angular detection: Attempts to parse `angular.json` but error handling is simple
+   - React detection: Only checks for "build" script, doesn't parse output directory
+   - **Need to add test cases to verify detection logic**
 
-```bash
-python -m setuptools_nodejs clean
-```
+2. **Version Check Feature**
+   - `get_node_version()` and `get_npm_version()` methods exist but never called
+   - No actual validation of Node.js and npm versions during build process
+   - **Need to implement version check logic and add calls**
 
-### Python Build Integration
+3. **Dependency Declaration**
+   - Version check requires `semantic_version` package but not declared in dependencies
+   - **Need to add dependency declaration in pyproject.toml**
 
-When you build your Python package using standard tools, the frontend build happens automatically:
-
-```bash
-# Build wheel (includes frontend)
-python -m build --wheel
-
-# Build source distribution (includes frontend)
-python -m build --sdist
-```
-
-### Build Configuration Settings
-
-You can control the build behavior using configuration settings:
-
-```bash
-# Skip frontend build
-python -m build --config-setting=skip_frontend_build=true
-
-# Continue build even if frontend fails
-python -m build --config-setting=fail_on_frontend_error=false
-```
-
-## Project Structure Examples
-
-### Basic Full-Stack App
-
-```
-my-app/
-├── frontend/              # React/Vue frontend
-│   ├── package.json
-│   ├── src/
-│   └── public/
-├── my_app/               # Python package
-│   ├── __init__.py
-│   └── static/           # ← Built frontend goes here
-└── pyproject.toml
-```
-
-### Multiple Frontend Projects
-
-```
-my-project/
-├── admin-frontend/       # Admin dashboard
-│   └── package.json
-├── client-frontend/      # Client-facing app
-│   └── package.json
-├── my_package/
-│   ├── __init__.py
-│   ├── admin/            # ← Admin frontend
-│   └── client/           # ← Client frontend
-└── pyproject.toml
-```
-
-## Error Handling
-
-### Common Issues
-
-1. **Node.js not found**: Make sure Node.js and npm are installed and in your PATH
-2. **Missing configuration**: Ensure `[tool.setuptools.nodejs]` section exists in pyproject.toml
-3. **Build failures**: Check frontend build logs for specific errors
-
-### Debugging
-
-Enable verbose logging to see detailed build information:
-
-```bash
-python -m setuptools_nodejs build --verbose
-```
+### Priority TODO
+- [ ] Add test cases for framework auto-detection feature
+- [ ] Implement Node.js and npm version check functionality
+- [ ] Actually call version check methods during build process
+- [ ] Add `semantic_version` dependency declaration
+- [ ] Improve error handling and user feedback for framework detection
+- [ ] **npm Version Validation**: Add proper npm version checking before build
+- [ ] **Framework-Specific Artifacts Detection**: 
+  - [ ] Vue.js: Properly parse `vite.config.*` and `vue.config.js` for output directory
+  - [ ] Angular: Complete `angular.json` parsing with proper error handling
+  - [ ] React: Parse `package.json` build scripts and configuration files for output paths
+- [ ] **Enhanced Configuration Validation**: Validate all configuration parameters before build
+- [ ] **Better Error Messages**: Provide more informative error messages for common issues
 
 ## Development
 
@@ -202,7 +184,7 @@ python -m setuptools_nodejs build --verbose
 
 ```bash
 # Clone the repository
-git clone https://gitlab.ee-yyk.com/tools/setuptools-nodejs
+git clone https://github.com/TuvokYang/setuptools-nodejs
 cd setuptools-nodejs
 
 # Install in development mode
@@ -212,29 +194,6 @@ pip install -e ".[dev]"
 pytest
 ```
 
-### Running Tests
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov
-
-# Run specific test file
-pytest tests/test_config.py
-```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
@@ -242,13 +201,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 If you encounter any problems or have questions, please:
-
-1. Check the [documentation](https://gitlab.ee-yyk.com/tools/setuptools-nodejs#readme)
-2. Search [existing issues](https://gitlab.ee-yyk.com/tools/setuptools-nodejs/issues)
-3. Create a [new issue](https://gitlab.ee-yyk.com/tools/setuptools-nodejs/issues/new)
-
-## Acknowledgments
-
-- Inspired by the need to simplify full-stack Python application packaging
-- Built on top of the excellent setuptools library
-- Thanks to all contributors and users
+1. Check the [documentation](https://github.com/TuvokYang/setuptools-nodejs#readme)
+2. Search [existing issues](https://github.com/TuvokYang/setuptools-nodejs/issues)
+3. Create a [new issue](https://github.com/TuvokYang/setuptools-nodejs/issues/new)

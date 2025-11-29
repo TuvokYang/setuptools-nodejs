@@ -211,23 +211,14 @@ def nodejs_extensions(
 
 def pyprojecttoml_config(dist: Distribution) -> None:
     logger.debug("setuptools_nodejs pyprojecttoml_config called")
-    try:
-        with open("pyproject.toml", "rb") as f:
-            cfg = toml_load(f).get("tool", {}).get("setuptools-nodejs")
-        logger.debug(f"pyproject.toml config: {cfg}")
-    except FileNotFoundError:
-        logger.debug("pyproject.toml not found")
-        # Set empty list to ensure attribute exists
-        dist.nodejs_extensions = []  # type: ignore[attr-defined]
-        return
-
+    
+    # Get Node.js extensions from configuration
+    extensions = get_nodejs_extensions_from_config()
+    
     # Always set nodejs_extensions attribute, even if empty
-    if cfg:
-        # Handle frontend-projects array format
-        frontend_projects = cfg.get("frontend-projects", [])
-        logger.debug(f"frontend_projects: {frontend_projects}")
-        extensions = map(partial(_create, NodeJSExtension), frontend_projects)
-        dist.nodejs_extensions = [*extensions]  # type: ignore[attr-defined]
+    dist.nodejs_extensions = extensions  # type: ignore[attr-defined]
+    
+    if extensions:
         logger.debug(f"created nodejs_extensions: {dist.nodejs_extensions}")
         nodejs_extensions(dist, "nodejs_extensions", dist.nodejs_extensions)  # type: ignore[attr-defined]
         
@@ -254,9 +245,7 @@ def pyprojecttoml_config(dist: Distribution) -> None:
         # logger.debug("Registered find_nodejs_source_files as file finder")
         
     else:
-        logger.debug("no setuptools-nodejs config found")
-        # Set empty list to ensure attribute exists
-        dist.nodejs_extensions = []  # type: ignore[attr-defined]
+        logger.debug("no setuptools-nodejs config found or no extensions created")
 
 
 def _create(constructor: Type[T], config: dict) -> T:
@@ -270,6 +259,35 @@ def _create(constructor: Type[T], config: dict) -> T:
         kwargs["target"] = kwargs.get("source_dir", "nodejs")
     return constructor(**kwargs)
 
+def get_nodejs_extensions_from_config() -> List[NodeJSExtension]:
+    """
+    Read configuration from pyproject.toml and create NodeJSExtension instances.
+    
+    Returns:
+        List of NodeJSExtension instances, empty list if no configuration found
+    """
+    try:
+        with open("pyproject.toml", "rb") as f:
+            cfg = toml_load(f).get("tool", {}).get("setuptools-nodejs")
+        logger.debug(f"pyproject.toml config: {cfg}")
+    except FileNotFoundError:
+        logger.debug("pyproject.toml not found")
+        return []
+    except Exception as e:
+        logger.debug(f"Error reading pyproject.toml: {e}")
+        return []
+
+    if cfg:
+        # Handle frontend-projects array format
+        frontend_projects = cfg.get("frontend-projects", [])
+        logger.debug(f"frontend_projects: {frontend_projects}")
+        extensions = map(partial(_create, NodeJSExtension), frontend_projects)
+        return [*extensions]
+    else:
+        logger.debug("no setuptools-nodejs config found")
+        return []
+
+
 def _get_bdist_wheel_cmd(
     dist: Distribution, create: Literal[True, False] = True
 ) -> Optional[bdist_wheel]:
@@ -280,44 +298,6 @@ def _get_bdist_wheel_cmd(
     except Exception:
         return None
 
-def _should_exclude_file(file_path: Path, source_dir: str, exclude_dir: str) -> bool:
-    """
-    Check if a file should be excluded from sdist.
-    
-    Args:
-        file_path: Absolute path to the file
-        source_dir: Source directory path
-        exclude_dir: Exclude directory path (relative to source_dir or absolute)
-        
-    Returns:
-        True if the file should be excluded, False otherwise
-    """
-    logger.debug(f"file_path: {file_path}, source_dir: {source_dir}, exclude_dir: {exclude_dir}")
-    # 1. First check for node_modules
-    try:
-        if not file_path.is_absolute():
-            _file_path = file_path.absolute()
-        else:
-            _file_path = file_path
-        # 2. Handle artifacts_dir
-        artifacts_path = Path(exclude_dir)
-        
-        # If artifacts_dir is relative, convert to absolute path by joining with source_dir
-        if not artifacts_path.is_absolute():
-            artifacts_path = (Path(source_dir) / artifacts_path).absolute()
-        
-        # 3. Check if file is under artifacts_dir
-        try:
-            _file_path.relative_to(artifacts_path)
-            return True  # File is under artifacts_dir, exclude it
-        except Exception as e:
-            # File is not under artifacts_dir
-            logger.debug(e)
-            pass
-    except Exception as e:
-        logger.error(e)
-        return True
-    return False
 
 def find_nodejs_source_files(dirname: str) -> list[str]:
     """
@@ -330,36 +310,21 @@ def find_nodejs_source_files(dirname: str) -> list[str]:
     Returns:
         List of file paths relative to project root
     """
-    try:
-        with open("pyproject.toml", "rb") as f:
-            config = toml_load(f)
+    # Get Node.js extensions from configuration
+    extensions = get_nodejs_extensions_from_config()
+    files = []
+    
+    for extension in extensions:
+        logger.debug(f"Processing extension: {extension.name}")
+        logger.debug(f"source_dir: {extension.source_dir}")
+        logger.debug(f"exclude_dirs: {extension.exclude_dirs}")
         
-        nodejs_config = config.get("tool", {}).get("setuptools-nodejs", {})
-        frontend_projects = nodejs_config.get("frontend-projects", [])
-        files = []
-        for module in frontend_projects:
-            source_dir = module.get("source_dir")
-            artifacts_dir = module.get("artifacts_dir", "dist")
-            exclude_dirs = ['node_modules', artifacts_dir]
-            if source_dir:
-                source_path = Path(source_dir)
-                logger.debug(f"source_dir: {source_dir}")
-                if source_path.exists():
-                    for file_path in source_path.rglob('*'):
-                        if file_path.is_file():
-                            should_exclude = False
-                            for exclude_dir in exclude_dirs:
-                                should_exclude |= _should_exclude_file(file_path, source_dir, exclude_dir)
-                            if not should_exclude:
-                                logger.debug(f"including file: {file_path}")
-                                files.append(str(file_path))
-                            else:
-                                logger.debug(f"Excluding file: {file_path}")
+        # Use the extension's get_source_files method
+        extension_files = extension.get_source_files()
+        files.extend(extension_files)
         
-        logger.debug(f"find_nodejs_source_files found {len(files)} files")
-        logger.debug(f"Files found: {files[:10]}")  # Show first 10 files for debugging
-        return files
-                                
-    except Exception as e:
-        logger.debug(f"Error in find_nodejs_source_files: {e}")
-        return []
+        logger.debug(f"Added {len(extension_files)} files from {extension.source_dir}")
+    
+    logger.debug(f"find_nodejs_source_files found {len(files)} files total")
+    logger.debug(f"Files found: {files[:10]}")  # Show first 10 files for debugging
+    return files
