@@ -188,9 +188,9 @@ def add_nodejs_extension(dist: Distribution) -> None:
                 super().initialize_options()
 
             def get_tag(self) -> Tuple[str, str, str]:
-                python, abi, plat = super().get_tag()
+                # python, abi, plat = super().get_tag()
                 # No special platform handling needed for Node.js extensions
-                return python, abi, plat
+                return 'py3', 'none', 'any'
 
         dist.cmdclass["bdist_wheel"] = bdist_wheel_nodejs_extension
 

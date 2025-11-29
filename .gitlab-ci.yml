@@ -1,0 +1,68 @@
+stages:
+  - test
+  - publish
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+.test_template: &test_definition
+  stage: test
+  before_script:
+    - python -V
+    - pip install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+    - pip install -U pip
+    - pip install build twine pytest pytest-cov
+    - pip install -e .
+  script:
+    - pytest tests/ -v --cov=setuptools_nodejs --cov-report=xml
+    - python -m build
+    - pip install dist/*.whl
+  artifacts:
+    paths:
+      - dist/
+    reports:
+      cobertura: coverage.xml
+
+test:python37:
+  <<: *test_definition
+  image: python:3.7
+
+test:python38:
+  <<: *test_definition
+  image: python:3.8
+
+test:python39:
+  <<: *test_definition
+  image: python:3.9
+
+test:python310:
+  <<: *test_definition
+  image: python:3.10
+
+test:python311:
+  <<: *test_definition
+  image: python:3.11
+
+test:python312:
+  <<: *test_definition
+  image: python:3.12
+
+publish:
+  stage: publish
+  image: python:3.11
+  only:
+    - main
+  before_script:
+    - pip install build twine
+  script:
+    - python -m build
+    - twine upload dist/* --username __token__ --password $PYPI_TOKEN
+  dependencies:
+    - test:python311

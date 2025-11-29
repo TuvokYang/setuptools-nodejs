@@ -1,16 +1,15 @@
 [build-system]
-requires = ["setuptools>=45.0"]
+requires = ["setuptools>=45.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "setuptools-nodejs"
-version = "0.1.0"
 description = "Setuptools Node.js extension plugin"
 readme = "README.md"
 requires-python = ">=3.7"
 keywords = ["distutils", "setuptools", "nodejs", "npm"]
 authors = [
-    {name = "Developer", email = "dev@example.com"},
+    {name = "TuvokYang", email = "yangyk16@whu.edu.cn"},
 ]
 classifiers = [
     "Topic :: Software Development :: Build Tools",
@@ -30,6 +29,8 @@ dependencies = [
     "setuptools>=45.0",
 ]
 
+dynamic = ['version']
+
 [project.entry-points."distutils.commands"]
 clean_nodejs = "setuptools_nodejs:clean_nodejs"
 build_nodejs = "setuptools_nodejs:build_nodejs"
@@ -44,9 +45,11 @@ setuptools_nodejs = "setuptools_nodejs.setuptools_ext:pyprojecttoml_config"
 nodejs = "setuptools_nodejs.setuptools_ext:find_nodejs_source_files"
 
 [project.urls]
-Homepage = "https://gitlab.ee-yyk.com/tools/setuptools-nodejs"
-Repository = "https://gitlab.ee-yyk.com/tools/setuptools-nodejs"
-issues = "https://gitlab.ee-yyk.com/tools/setuptools-nodejs/issues"
+Homepage = "https://github.com/TuvokYang/setuptools-nodejs"
+Repository = "https://github.com/TuvokYang/setuptools-nodejs.git"
+issues = "https://github.com/TuvokYang/setuptools-nodejs/issues"
 
 [tool.setuptools.package-data]
 setuptools_nodejs = ["py.typed"]
+
+[tool.setuptools_scm]
