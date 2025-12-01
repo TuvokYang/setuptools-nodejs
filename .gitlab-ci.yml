@@ -28,13 +28,15 @@ cache:
     # 使用pyproject.toml中的test依赖
     - pip install -e .[test]
   script:
-    - pytest tests/ -v --cov=setuptools_nodejs --cov-report=xml
+    - pytest tests/ -v --cov --cov-report=xml:coverage.xml --junitxml=report.xml
     - python -m build
     - pip install dist/*.whl
+  coverage: /TOTAL.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/
   artifacts:
     paths:
       - dist/
     reports:
+      junit: report.xml
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml

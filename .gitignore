@@ -37,6 +37,7 @@ coverage.xml
 .pytest_cache/
 htmlcov/
 .benchmarks
+report.*
 
 # Node.js
 node_modules/
