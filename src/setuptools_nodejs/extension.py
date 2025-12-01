@@ -14,8 +14,7 @@ from typing import (
     Union,
 )
 
-if TYPE_CHECKING:
-    from semantic_version import SimpleSpec
+from semantic_version import SimpleSpec
 
 from ._utils import Env
 
@@ -94,8 +93,6 @@ class NodeJSExtension(Extension):
         if self.node_version is None:
             return None
         try:
-            from semantic_version import SimpleSpec
-
             return SimpleSpec(self.node_version)
         except ValueError:
             raise SetupError(
@@ -150,8 +147,6 @@ class NodeJSExtension(Extension):
         if self.npm_version is None:
             return None
         try:
-            from semantic_version import SimpleSpec
-
             return SimpleSpec(self.npm_version)
         except ValueError:
             raise SetupError(

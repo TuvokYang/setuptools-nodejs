@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45.0", "setuptools-scm"]
+requires = ["setuptools>=75.6", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,6 +12,7 @@ authors = [
     {name = "TuvokYang", email = "yangyk16@whu.edu.cn"},
 ]
 license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Intended Audience :: Developers",
@@ -21,12 +22,14 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Development Status :: 4 - Beta",
     "Operating System :: OS Independent",
 ]
 
 dependencies = [
-    "setuptools>=45.0",
+    "setuptools>=75.6",
+    "semantic_version>=2.8.2,<3",
 ]
 
 dynamic = ['version']
