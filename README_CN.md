@@ -187,8 +187,8 @@ python -m setuptools_nodejs build --verbose
 git clone https://github.com/TuvokYang/setuptools-nodejs
 cd setuptools-nodejs
 
-# 安装开发模式
-pip install -e ".[dev]"
+# 可编辑模式
+pip install -e .
 
 # 运行测试
 pytest

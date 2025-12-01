@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=67.0", "setuptools-scm"]
+requires = ["setuptools>=77.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -28,7 +28,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "setuptools>=67.0",
+    "setuptools>=77.0",
     "semantic_version>=2.8.2,<3",
 ]
 

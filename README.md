@@ -187,8 +187,8 @@ python -m setuptools_nodejs build --verbose
 git clone https://github.com/TuvokYang/setuptools-nodejs
 cd setuptools-nodejs
 
-# Install in development mode
-pip install -e ".[dev]"
+# Install in editable mode
+pip install -e .
 
 # Run tests
 pytest

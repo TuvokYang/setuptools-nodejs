@@ -60,12 +60,16 @@ test:python312:
 publish:
   stage: publish
   image: python:3.11
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_TAG
   before_script:
     - pip install build twine
   script:
     - python -m build
+    - twine upload --repository-url https://test.pypi.org dist/* --username __token__ --password $TEST_PYPI_TOKEN
     - twine upload dist/* --username __token__ --password $PYPI_TOKEN
   dependencies:
+    - test:python39
+    - test:python310
     - test:python311
+    - test:python312
