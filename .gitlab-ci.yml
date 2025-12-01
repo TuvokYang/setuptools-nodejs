@@ -11,6 +11,8 @@ cache:
     - venv/
 
 .test_template: &test_definition
+  tags:
+    - docker
   stage: test
   before_script:
     - python -V
@@ -28,7 +30,9 @@ cache:
     paths:
       - dist/
     reports:
-      cobertura: coverage.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
 
 test:python37:
   <<: *test_definition
