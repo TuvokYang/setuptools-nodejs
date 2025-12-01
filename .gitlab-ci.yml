@@ -17,12 +17,12 @@ cache:
   before_script:
     # 安装Node.js和npm（用于前端编译）
     - apt-get update && apt-get install -y curl
-    - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    - curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
     - apt-get install -y nodejs
     # Python环境设置
     - python -V
     - pip install virtualenv
-    - virtualenv venv
+    - if [ ! -d "venv" ]; then virtualenv venv; fi
     - source venv/bin/activate
     - pip install -U pip
     # 使用pyproject.toml中的test依赖
