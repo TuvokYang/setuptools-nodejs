@@ -22,7 +22,7 @@ cache:
     # Python环境设置
     - python -V
     - pip install virtualenv
-    - if [ ! -d "venv" ]; then virtualenv venv; fi
+    - if [ -d "venv" ] && [ -f "venv/bin/python" ] && [ -f "venv/bin/pip" ]; then echo "Using existing virtual environment"; else echo "Creating new virtual environment"; rm -rf venv; virtualenv venv; fi
     - source venv/bin/activate
     - pip install -U pip
     # 使用pyproject.toml中的test依赖
