@@ -41,14 +41,6 @@ cache:
         coverage_format: cobertura
         path: coverage.xml
 
-test:python37:
-  <<: *test_definition
-  image: python:3.7
-
-test:python38:
-  <<: *test_definition
-  image: python:3.8
-
 test:python39:
   <<: *test_definition
   image: python:3.9
