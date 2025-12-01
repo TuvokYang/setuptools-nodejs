@@ -15,13 +15,18 @@ cache:
     - docker
   stage: test
   before_script:
+    # 安装Node.js和npm（用于前端编译）
+    - apt-get update && apt-get install -y curl
+    - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    - apt-get install -y nodejs
+    # Python环境设置
     - python -V
     - pip install virtualenv
     - virtualenv venv
     - source venv/bin/activate
     - pip install -U pip
-    - pip install build twine pytest pytest-cov
-    - pip install -e .
+    # 使用pyproject.toml中的test依赖
+    - pip install -e .[test]
   script:
     - pytest tests/ -v --cov=setuptools_nodejs --cov-report=xml
     - python -m build
@@ -32,7 +37,7 @@ cache:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: coverage/cobertura-coverage.xml
+        path: coverage.xml
 
 test:python37:
   <<: *test_definition

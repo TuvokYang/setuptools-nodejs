@@ -31,6 +31,14 @@ dependencies = [
 
 dynamic = ['version']
 
+[project.optional-dependencies]
+test = [
+    "pytest>=6.0",
+    "pytest-cov>=3.0",
+    "build",
+    "twine",
+]
+
 [project.entry-points."distutils.commands"]
 clean_nodejs = "setuptools_nodejs:clean_nodejs"
 build_nodejs = "setuptools_nodejs:build_nodejs"
