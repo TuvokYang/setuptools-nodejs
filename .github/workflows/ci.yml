@@ -43,7 +43,7 @@ jobs:
     
     - name: Test installation
       run: |
-        pip install "${{ env.WHEEL_FILE }}"
+        pip install "$WHEEL_FILE"
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
