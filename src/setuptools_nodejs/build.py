@@ -128,17 +128,19 @@ class build_nodejs(NodeJSCommand):
 
         if not quiet:
             logger.info(" ".join(install_command))
-
         # Execute npm install
         try:
             stderr = subprocess.PIPE if quiet else None
+            # Use self.shell_enable from NodeJSCommand base class
+            # shell=True is needed on Windows for npm (.cmd files)
+            # shell=False on Unix-like systems to avoid argument parsing issues
             check_subprocess_output(
                 install_command,
                 env=env,
                 stderr=stderr,
                 text=True,
                 encoding='utf-8',
-                shell=True,
+                shell=self.shell_enable,
                 cwd=source_dir,
             )
         except subprocess.CalledProcessError as e:
@@ -165,13 +167,16 @@ class build_nodejs(NodeJSCommand):
         # Execute npm run build
         try:
             stderr = subprocess.PIPE if quiet else None
+            # Use self.shell_enable from NodeJSCommand base class
+            # shell=True is needed on Windows for npm (.cmd files)
+            # shell=False on Unix-like systems to avoid argument parsing issues
             check_subprocess_output(
                 build_command,
                 env=env,
                 stderr=stderr,
                 text=True,
                 encoding='utf-8',
-                shell=True,
+                shell=self.shell_enable,
                 cwd=source_dir,
             )
         except subprocess.CalledProcessError as e:

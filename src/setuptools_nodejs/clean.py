@@ -46,7 +46,7 @@ class clean_nodejs(NodeJSCommand):
                             env=ext.env, 
                             text=True, 
                             encoding='utf-8', 
-                            shell=True,
+                            shell=self.shell_enable,
                             cwd=ext.source_dir
                         )
                         return  # Successfully cleaned with npm
