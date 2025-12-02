@@ -23,7 +23,7 @@ cache:
     - if [ -d "venv" ] && [ -f "venv/bin/python" ] && [ -f "venv/bin/pip" ]; then echo "Using existing virtual environment"; else echo "Creating new virtual environment"; rm -rf venv; virtualenv venv; fi
     - source venv/bin/activate
     - pip install -U pip
-    - pip install -r requirements.txt
+    - pip install -e .[dev]
   script:
     - pytest tests/ -v --cov --cov-branch --cov-report=xml:coverage.xml
     - pytest tests/ --cov --junitxml=junit.xml -o junit_family=legacy
