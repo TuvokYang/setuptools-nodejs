@@ -57,9 +57,27 @@ def get_local_package_path(package_name: str) -> str:
             if line.startswith("Editable project location:"):
                 path = line.split(":", 1)[1].strip()
                 return path
+        
+        # If not editable, try to find Location (for regular installs)
+        for line in result.stdout.splitlines():
+            if line.startswith("Location:"):
+                path = line.split(":", 1)[1].strip()
+                return path
                 
-        raise RuntimeError(f"Could not find editable location for {package_name}")
+        # Fallback: use current directory if package is setuptools-nodejs
+        if package_name == "setuptools-nodejs":
+            # Try to find the package in the current project
+            project_root = Path(__file__).parent.parent
+            if (project_root / "src" / "setuptools_nodejs").exists():
+                return str(project_root)
+        
+        raise RuntimeError(f"Could not find location for {package_name}")
     except subprocess.CalledProcessError as e:
+        # Fallback for CI environment
+        if package_name == "setuptools-nodejs":
+            project_root = Path(__file__).parent.parent
+            if (project_root / "src" / "setuptools_nodejs").exists():
+                return str(project_root)
         raise RuntimeError(f"Failed to get package info for {package_name}: {e}")
 
 
@@ -276,17 +294,77 @@ def test_example_project_build(project_dir: Path):
         pyproject_file = tmp_project / "pyproject.toml"
         modify_pyproject_with_local_path(pyproject_file, local_path)
         
-        # Run build command
+        # Run build command with npm cache directory to avoid permission issues
         try:
-            subprocess.run(
+            # Create npm cache directory in temp dir
+            npm_cache_dir = tmpdir_path / '.npm_cache'
+            npm_cache_dir.mkdir(exist_ok=True)
+            
+            # Set environment variables for npm
+            env = os.environ.copy()
+            env['npm_config_cache'] = str(npm_cache_dir)
+            # Use npm registry mirror for faster downloads in CI
+            env['npm_config_registry'] = 'https://registry.npmjs.org/'
+            
+            # Check if npm is available
+            # On Windows, npm might be npm.cmd
+            npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
+            npm_available = shutil.which(npm_cmd) is not None
+            
+            if not npm_available:
+                # Try the other variant
+                npm_cmd = "npm" if os.name == "nt" else "npm.cmd"
+                npm_available = shutil.which(npm_cmd) is not None
+            
+            if not npm_available:
+                pytest.skip("npm not available, skipping test")
+            
+            # First, try to run npm install directly to see detailed errors
+            browser_dir = tmp_project / "browser"
+            if browser_dir.exists():
+                # Run npm install with detailed output
+                npm_result = subprocess.run(
+                    [npm_cmd, "install"],
+                    cwd=browser_dir,
+                    capture_output=True,
+                    text=True,
+                    env=env
+                )
+                if npm_result.returncode != 0:
+                    pytest.fail(
+                        f"npm install failed for {project_dir.name}:\n"
+                        f"npm STDOUT:\n{npm_result.stdout}\n"
+                        f"npm STDERR:\n{npm_result.stderr}\n"
+                        f"npm return code: {npm_result.returncode}"
+                    )
+            
+            # Then run the build
+            result = subprocess.run(
                 ["python", "-m", "build", "--no-isolation"],
                 cwd=tmp_project,
-                check=True,
                 capture_output=True,
-                text=True
+                text=True,
+                env=env
             )
+            
+            if result.returncode != 0:
+                # Provide detailed error information
+                error_msg = (
+                    f"Build failed for {project_dir.name} (return code: {result.returncode}):\n"
+                    f"STDOUT:\n{result.stdout}\n"
+                    f"STDERR:\n{result.stderr}\n"
+                    f"Environment: npm_cache={npm_cache_dir}, registry={env['npm_config_registry']}\n"
+                )
+                pytest.fail(error_msg)
+                
         except subprocess.CalledProcessError as e:
-            pytest.fail(f"Build failed for {project_dir.name}:\n{e.stderr}")
+            # Fallback for check=True case
+            pytest.fail(
+                f"Build failed for {project_dir.name}:\n"
+                f"STDOUT:\n{e.stdout}\n"
+                f"STDERR:\n{e.stderr}\n"
+                f"Return code: {e.returncode}"
+            )
         
         # Check dist directory exists
         dist_dir = tmp_project / "dist"

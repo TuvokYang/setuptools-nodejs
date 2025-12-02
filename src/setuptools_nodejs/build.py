@@ -144,7 +144,7 @@ class build_nodejs(NodeJSCommand):
         except subprocess.CalledProcessError as e:
             # Don't include stdout in the formatted error as it is a huge dump
             # of npm output which aren't helpful for the end user.
-            raise CompileError(format_called_process_error(e, include_stdout=False))
+            raise CompileError(format_called_process_error(e, include_stdout=True))
 
         except OSError:
             raise ExecError(
