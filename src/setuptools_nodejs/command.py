@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
+import os
 from setuptools import Command, Distribution
 from typing import List, Optional
 
@@ -18,6 +19,10 @@ class NodeJSCommand(Command, ABC):
 
     def initialize_options(self) -> None:
         self.extensions: List[NodeJSExtension] = []
+        # Determine if shell should be enabled based on platform
+        # shell=True is needed on Windows for npm (.cmd files)
+        # shell=False on Unix-like systems to avoid argument parsing issues
+        self.shell_enable = os.name == "nt"  # True on Windows, False on Unix-like systems
 
     def finalize_options(self) -> None:
         extensions: Optional[List[NodeJSExtension]] = getattr(
