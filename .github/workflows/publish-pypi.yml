@@ -7,6 +7,8 @@ on:
 jobs:
   test:
     uses: ./.github/workflows/test.yml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   release-build:
     needs: test
@@ -33,7 +35,7 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: python-packages
+        name: release-dists
         path: dist/
         retention-days: 5
     
@@ -69,4 +71,4 @@ jobs:
           path: dist/
 
       - name: Publish release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f
+        uses: pypa/gh-action-pypi-publish@release/v1
