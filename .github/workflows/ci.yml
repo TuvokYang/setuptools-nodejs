@@ -42,7 +42,6 @@ jobs:
     
     - name: Test installation
       run: |
-        pip install "$WHEEL_FILE"
         python -c "import glob, subprocess; wheels = glob.glob('dist/*.whl'); subprocess.run(['pip', 'install', wheels[0]], check=True)"
     
     - name: Upload coverage to Codecov
