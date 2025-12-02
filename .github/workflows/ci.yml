@@ -39,10 +39,11 @@ jobs:
     - name: Build package
       run: |
         python -m build
+        python -c "import glob, os; wheels = glob.glob('dist/*.whl'); print(f'WHEEL_FILE={wheels[0]}')" >> $GITHUB_ENV
     
     - name: Test installation
       run: |
-        pip install dist/*.whl
+        pip install "${{ env.WHEEL_FILE }}"
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
