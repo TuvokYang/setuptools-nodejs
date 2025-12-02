@@ -79,13 +79,13 @@ requires = ["setuptools", "setuptools-nodejs"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vue-helloword"
+name = "vue-helloworld"
 version = "0.1.0"
 description = "Test project for setuptools-nodejs integration"
 
 [tool.setuptools-nodejs]
 frontend-projects = [
-    {target = "vue-helloword", source_dir = "browser", artifacts_dir = "dist"}
+    {target = "vue-helloworld", source_dir = "browser", artifacts_dir = "dist"}
 ]
 
 [tool.setuptools.packages.find]
