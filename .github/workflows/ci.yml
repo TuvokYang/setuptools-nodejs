@@ -34,7 +34,8 @@ jobs:
     
     - name: Run tests
       run: |
-        pytest tests/ -v --cov  --cov-branch --cov-report=xml:coverage.xml --junitxml=report.xml
+        pytest tests/ -v --cov  --cov-branch --cov-report=xml:coverage.xml
+        pytest tests/ --cov --junitxml=junit.xml -o junit_family=legacy
     
     - name: Build package
       run: |
@@ -45,12 +46,17 @@ jobs:
         python -c "import glob, subprocess; wheels = glob.glob('dist/*.whl'); subprocess.run(['pip', 'install', wheels[0]], check=True)"
     
     - name: Upload coverage to Codecov
+      if: ${{ !cancelled() }}
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   publish:
     needs: test

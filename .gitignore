@@ -38,6 +38,7 @@ coverage.xml
 htmlcov/
 .benchmarks
 report.*
+junit.*
 
 # Node.js
 node_modules/
