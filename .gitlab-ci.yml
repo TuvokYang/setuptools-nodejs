@@ -15,22 +15,20 @@ cache:
     - docker
   stage: test
   before_script:
-    # 安装Node.js和npm（用于前端编译）
     - apt-get update && apt-get install -y curl
     - curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
     - apt-get install -y nodejs
-    # Python环境设置
     - python -V
     - pip install virtualenv
     - if [ -d "venv" ] && [ -f "venv/bin/python" ] && [ -f "venv/bin/pip" ]; then echo "Using existing virtual environment"; else echo "Creating new virtual environment"; rm -rf venv; virtualenv venv; fi
     - source venv/bin/activate
     - pip install -U pip
-    # 使用pyproject.toml中的test依赖
-    - pip install -e .[test]
+    - pip install -r requirements.txt
   script:
-    - pytest tests/ -v --cov --cov-report=xml:coverage.xml --junitxml=report.xml
+    - pytest tests/ -v --cov --cov-branch --cov-report=xml:coverage.xml
+    - pytest tests/ --cov --junitxml=junit.xml -o junit_family=legacy
     - python -m build
-    - pip install dist/*.whl
+    - python -c "import glob, subprocess; wheels = glob.glob('dist/*.whl'); subprocess.run(['pip', 'install', wheels[0]], check=True)"
   coverage: /TOTAL.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/
   artifacts:
     paths:
