@@ -34,7 +34,7 @@ jobs:
     
     - name: Run tests
       run: |
-        pytest tests/ -v --cov=setuptools_nodejs --cov-report=xml
+        pytest tests/ -v --cov  --cov-branch --cov-report=xml:coverage.xml --junitxml=report.xml
     
     - name: Build package
       run: |
@@ -45,8 +45,9 @@ jobs:
         python -c "import glob, subprocess; wheels = glob.glob('dist/*.whl'); subprocess.run(['pip', 'install', wheels[0]], check=True)"
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
