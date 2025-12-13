@@ -1,0 +1,5 @@
+# Include README file
+include README.md
+
+# Include package data
+recursive-include vue_helloworld_setuppy *.py
