@@ -64,3 +64,4 @@ issues = "https://github.com/TuvokYang/setuptools-nodejs/issues"
 setuptools_nodejs = ["py.typed"]
 
 [tool.setuptools_scm]
+local_scheme = "no-local-version"

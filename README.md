@@ -94,13 +94,58 @@ where = ["python"]
 
 ### Multiple Frontend Projects with Output Directories
 
+`output_dir` specifies the **relative subdirectory path inside the package** for frontend build artifacts. It does not create a separate package namespace. If not specified, it defaults to `frontend`.
+
+For example, with a package named `myapp`:
+
+| `output_dir` value | Artifact install path |
+|-------------------|----------------------|
+| Not set (default `frontend`) | `myapp/frontend/index.html` |
+| `static/admin` | `myapp/static/admin/index.html` |
+| `assets/client` | `myapp/assets/client/index.html` |
+
 ```toml
 [tool.setuptools-nodejs]
 frontend-projects = [
-    {target = "admin-panel", source_dir = "admin", artifacts_dir = "dist", output_dir = "my_package/admin"},
-    {target = "client-app", source_dir = "client", artifacts_dir = "build", output_dir = "my_package/client"}
+    {target = "admin-panel", source_dir = "admin", artifacts_dir = "dist", output_dir = "static/admin"},
+    {target = "client-app", source_dir = "client", artifacts_dir = "build", output_dir = "static/client"}
 ]
 ```
+
+### Accessing Frontend Artifacts in Python Code
+
+Use `importlib.resources` to access frontend build artifacts inside the package:
+
+```python
+# Example: Serve frontend static files in Flask/FastAPI
+try:
+    import importlib.resources as resources
+except ImportError:
+    # Python < 3.9 fallback
+    import importlib_resources as resources
+
+def get_frontend_dir(package_name: str = "myapp", sub_dir: str = "frontend") -> str:
+    """Get frontend artifacts directory path, works with both
+    pip install -e . and pip install ."""
+    with resources.path(package_name, sub_dir) as path:
+        return str(path)
+
+# Usage example (Flask)
+from flask import Flask, send_from_directory
+app = Flask(__name__)
+
+FRONTEND_DIR = get_frontend_dir("myapp", "frontend")
+
+@app.route("/")
+def serve_index():
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+@app.route("/assets/<path:filename>")
+def serve_assets(filename):
+    return send_from_directory(FRONTEND_DIR, f"assets/{filename}")
+```
+
+> **Note**: With `pip install -e .` (editable install), Python references the source directory directly instead of site-packages. Frontend artifacts are automatically copied to `<package_dir>/<package_name>/<output_dir>/`, consistent with regular install behavior.
 
 ### Advanced Configuration
 
