@@ -94,13 +94,57 @@ where = ["python"]
 
 ### 多个前端项目及输出目录
 
+`output_dir` 指定前端构建产物在**包内的相对子目录路径**，不占用包名空间。不指定时默认值为 `frontend`。
+
+例如，对于包名为 `myapp` 的项目：
+
+| output_dir 值 | 产物安装路径 |
+|---------------|-------------|
+| 不指定（默认 `frontend`） | `myapp/frontend/index.html` |
+| `static/admin` | `myapp/static/admin/index.html` |
+| `assets/client` | `myapp/assets/client/index.html` |
+
 ```toml
 [tool.setuptools-nodejs]
 frontend-projects = [
-    {target = "admin-panel", source_dir = "admin", artifacts_dir = "dist", output_dir = "my_package/admin"},
-    {target = "client-app", source_dir = "client", artifacts_dir = "build", output_dir = "my_package/client"}
+    {target = "admin-panel", source_dir = "admin", artifacts_dir = "dist", output_dir = "static/admin"},
+    {target = "client-app", source_dir = "client", artifacts_dir = "build", output_dir = "static/client"}
 ]
 ```
+
+### 在 Python 代码中访问前端产物
+
+通过 `importlib.resources` 访问包内的前端构建产物：
+
+```python
+# 示例：将前端产物作为静态文件目录提供给 Flask/FastAPI
+try:
+    import importlib.resources as resources
+except ImportError:
+    # Python < 3.9 兼容
+    import importlib_resources as resources
+
+def get_frontend_dir(package_name: str = "myapp", sub_dir: str = "frontend") -> str:
+    """获取前端产物目录路径，兼容 pip install -e . 和 pip install ."""
+    with resources.path(package_name, sub_dir) as path:
+        return str(path)
+
+# 使用示例（Flask）
+from flask import Flask, send_from_directory
+app = Flask(__name__)
+
+FRONTEND_DIR = get_frontend_dir("myapp", "frontend")
+
+@app.route("/")
+def serve_index():
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+@app.route("/assets/<path:filename>")
+def serve_assets(filename):
+    return send_from_directory(FRONTEND_DIR, f"assets/{filename}")
+```
+
+> **注意**：`pip install -e .`（可编辑安装）下，Python 直接引用源码目录而非 site-packages。前端产物会被自动复制到 `<package_dir>/<package_name>/<output_dir>/` 下，与普通安装行为一致。
 
 ### 高级配置
 

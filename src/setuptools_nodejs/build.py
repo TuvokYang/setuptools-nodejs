@@ -200,6 +200,18 @@ class build_nodejs(NodeJSCommand):
         # Return the artifact path
         return [_BuiltArtifact(ext.name, artifact_path)]
 
+    def _get_package_name(self) -> Optional[str]:
+        """
+        Get the first package name from the distribution's packages list.
+        
+        Returns:
+            The first package name, or None if no packages are defined.
+        """
+        packages: Optional[List[str]] = getattr(self.distribution, 'packages', None)
+        if packages:
+            return packages[0]
+        return None
+
     def install_extension(
         self, ext: NodeJSExtension, artifacts: List["_BuiltArtifact"]
     ) -> None:
@@ -208,12 +220,21 @@ class build_nodejs(NodeJSCommand):
         for artifact_name, artifact_path in artifacts:
             logger.info("Node.js artifacts built at %s", artifact_path)
 
-        # Copy artifacts to package_artifacts_dir in the package
+        # Get the package name to determine the correct install path
+        pkg_name = self._get_package_name()
+
+        # Copy artifacts to package_artifacts_dir inside the package
         build_py = self.get_finalized_command("build_py")
         package_dir = build_py.build_lib
         
-        # Create package_artifacts_dir in the package
-        package_artifacts_dir = os.path.join(package_dir, ext.package_artifacts_dir)
+        # Determine the correct package directory within build_lib
+        if pkg_name:
+            pkg_path = os.path.join(package_dir, *pkg_name.split('.'))
+        else:
+            pkg_path = package_dir
+        
+        # Create package_artifacts_dir inside the package directory
+        package_artifacts_dir = os.path.join(pkg_path, ext.package_artifacts_dir)
         os.makedirs(package_artifacts_dir, exist_ok=True)
         
         # Copy all artifacts to package_artifacts_dir
@@ -237,12 +258,27 @@ class build_nodejs(NodeJSCommand):
                     
                     logger.debug("Copied %s to %s", src_path, dest_path)
         
-        # For sdist, we need to ensure the package_artifacts_dir exists in the source
-        # so it gets included in the source distribution
-        source_package_artifacts_dir = os.path.join(os.getcwd(), ext.package_artifacts_dir)
+        # For sdist and editable install, ensure artifacts exist in source tree
+        if pkg_name:
+            # Find the source package directory from package_dir mapping
+            # package_dir maps package names to their source directories
+            pkg_dir_map: dict = getattr(self.distribution, 'package_dir', {})
+            # Get the base source dir for packages (e.g., "python" or "src")
+            base_src_dir = pkg_dir_map.get('', '')
+            
+            # Build the source package path:
+            # pkg_dir_map maps '' to base dir, and individual packages can override
+            pkg_source_dir = pkg_dir_map.get(pkg_name, os.path.join(base_src_dir, *pkg_name.split('.')))
+            if not os.path.isabs(pkg_source_dir):
+                pkg_source_dir = os.path.join(os.getcwd(), pkg_source_dir)
+            
+            source_package_artifacts_dir = os.path.join(pkg_source_dir, ext.package_artifacts_dir)
+        else:
+            source_package_artifacts_dir = os.path.join(os.getcwd(), ext.package_artifacts_dir)
+        
         if not os.path.exists(source_package_artifacts_dir):
             os.makedirs(source_package_artifacts_dir, exist_ok=True)
-            # Copy artifacts to source package_artifacts_dir for sdist
+            # Copy artifacts to source package_artifacts_dir for sdist/editable
             if os.path.isdir(artifact_path):
                 for root, dirs, files in os.walk(artifact_path):
                     for file in files:
@@ -256,7 +292,7 @@ class build_nodejs(NodeJSCommand):
                         # Copy file
                         shutil.copy2(src_path, dest_path)
                         
-                        logger.debug("Copied %s to %s for sdist", src_path, dest_path)
+                        logger.debug("Copied %s to %s for sdist/editable", src_path, dest_path)
 
 
 class _BuiltArtifact(NamedTuple):

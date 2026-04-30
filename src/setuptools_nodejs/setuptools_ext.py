@@ -226,14 +226,22 @@ def pyprojecttoml_config(dist: Distribution) -> None:
         if not hasattr(dist, 'package_data') or dist.package_data is None:
             dist.package_data = {}
         
-        # Add package_artifacts_dir/**/* to package_data for all packages
+        # Add package_artifacts_dir/**/* to package_data for the target package
         # Use the first extension's package_artifacts_dir, or default to "frontend"
         package_artifacts_dir = "frontend"
         if dist.nodejs_extensions and hasattr(dist.nodejs_extensions[0], 'package_artifacts_dir'):
             package_artifacts_dir = dist.nodejs_extensions[0].package_artifacts_dir
         
-        dist.package_data["*"] = [f"{package_artifacts_dir}/**/*"]
-        logger.debug(f"automatically added package_data: {dist.package_data}")
+        # Determine the target package name from distribution's packages list
+        # This ensures artifacts are placed inside the package directory (e.g., my_package/frontend/)
+        # rather than at site-packages root (e.g., site-packages/frontend/)
+        target_package = "*"  # fallback to wildcard
+        packages: Optional[list] = getattr(dist, 'packages', None)
+        if packages:
+            target_package = packages[0]
+        
+        dist.package_data[target_package] = [f"{package_artifacts_dir}/**/*"]
+        logger.debug(f"automatically added package_data for '{target_package}': {dist.package_data}")
         
         logger.debug(f"final package_data: {dist.package_data}")
         
