@@ -184,26 +184,10 @@ def test_setuppy_install():
         if result.returncode != 0:
             pytest.fail(f"install failed: {result.stderr}")
         
-        # Check that package was installed
-        site_packages = install_dir / "Lib" / "site-packages"
-        if site_packages.exists():
-            # Windows installation
-            package_dir = site_packages / "vue_helloworld_setuppy"
-            assert package_dir.exists() and package_dir.is_dir(), "Package not installed"
-        else:
-            # Unix-like installation
-            site_packages = install_dir / "lib"
-            if site_packages.exists():
-                # Find Python version directory
-                python_dirs = list(site_packages.iterdir())
-                for python_dir in python_dirs:
-                    if python_dir.name.startswith("python"):
-                        package_dir = python_dir / "site-packages" / "vue_helloworld_setuppy"
-                        if package_dir.exists():
-                            break
-                else:
-                    package_dir = None
-                assert package_dir is not None and package_dir.exists(), "Package not installed"
+        # Check that package was installed using recursive search
+        package_dirs = list(install_dir.rglob("vue_helloworld_setuppy"))
+        package_dir = package_dirs[0] if package_dirs else None
+        assert package_dir is not None and package_dir.is_dir(), f"Package not installed in {install_dir}"
 
 
 if __name__ == "__main__":
