@@ -40,11 +40,13 @@ def test_setuppy_sdist_includes_frontend_source():
             dist_dir = browser_dir / "dist"
             if not dist_dir.exists():
                 # Try to build frontend
+                # shell=True is needed on Windows for npm (.cmd files)
                 build_result = subprocess.run(
                     ["npm", "run", "build"],
                     cwd=browser_dir,
                     capture_output=True,
-                    text=True
+                    text=True,
+                    shell=(os.name == "nt")
                 )
                 if build_result.returncode != 0:
                     # If npm build fails, skip the test
