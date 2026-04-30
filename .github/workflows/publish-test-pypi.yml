@@ -16,8 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-    env:
-      SETUPTOOLS_SCM_LOCAL_SCHEME: "no-local-version"
 
     steps:
       - uses: actions/checkout@v4
